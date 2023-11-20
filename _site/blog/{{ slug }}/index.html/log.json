@@ -1,0 +1,6 @@
+{
+  "timestamp": "2023-11-20T02:05:48+01:00",
+  "src": "content/blog/*.md",
+  "dst": "_site/blog/{{ slug }}/index.html",
+  "filesProcessed": 0
+}

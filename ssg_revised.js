@@ -137,16 +137,22 @@ class StaticSiteGenerator {
         });
     }
 
-    async makePages(src, dst, templatePath) {
+    async makePages(src, dst, templateContent) {
         console.log("*** makePages ***");
+        console.log("*** templateContent = " + templateContent);
+        console.log("*** src = " + src);
+        console.log("*** dst = " + dst);
+
         // Create destination directory if it doesn't exist
         await fsExtra.ensureDir(dst);
 
         // Read the template
-        const templateContent = await fsExtra.readFile(templatePath, 'utf8');
+        //           const templateContent = await fsExtra.readFile(templatePath, 'utf8');
 
         // Process each markdown file in the source directory
         const mdFiles = glob.sync(path.join(src, '*.md'));
+        console.log("*** mdFiles = " + mdFiles);
+
         for (const mdFile of mdFiles) {
             // Extract the file name without extension
             const baseName = path.basename(mdFile, path.extname(mdFile));
@@ -159,6 +165,9 @@ class StaticSiteGenerator {
 
             // Generate the final HTML content
             const finalContent = templateContent.replace('{{ content }}', htmlContent);
+
+            console.log("*** finalContent = " + finalContent);
+            console.log("*** path.join(dst, `${baseName}.html`) = " + path.join(dst, `${baseName}.html`));
 
             // Write the HTML file to the destination directory
             await fsExtra.writeFile(path.join(dst, `${baseName}.html`), finalContent);
@@ -183,12 +192,23 @@ class StaticSiteGenerator {
 
     async makeList(src, dst) {
         console.log("*** makeList ***");
+        if (!src || typeof src !== 'string') {
+            throw new Error("Invalid 'src' argument: must be a defined string");
+        }
         // Create destination directory if it doesn't exist
-        await fs.ensureDir(dst);
+        await fsExtra.ensureDir(dst);
 
         // List all files in the source directory
-        const files = (await fs.readdir(src))
-            .filter(f => fs.statSync(path.join(src, f)).isFile());
+        //  const files = (await fs.readdir(src))
+        //    .filter(f => fs.statSync(path.join(src, f)).isFile());
+        console.log("***** src = " + src)
+        console.log("***** dst = " + dst)
+
+        const files = (await fs.promises.readdir(src))
+            .filter(async f => {
+                const stats = await fs.promises.stat(path.join(src, f));
+                return stats.isFile();
+            });
 
         // Write the list to a JSON file in the destination directory
         await fs.writeJson(path.join(dst, 'file_list.json'), files);
@@ -232,6 +252,8 @@ class StaticSiteGenerator {
         const finalPostLayout = this.render(pageLayout, postLayout);
         const finalListLayout = this.render(pageLayout, listLayout);
 
+        // async makePages(src, dst, templatePath)
+
         // Create site pages
         await this.makePages('content/_index.html', path.join(siteDir, 'index.html'), pageLayout, params);
         // make_pages('content/_index.html', '_site/index.html', page_layout, **params)
@@ -240,6 +262,9 @@ class StaticSiteGenerator {
 
         const blogPosts = await this.makePages('content/blog/*.md', '_site/blog/{{ slug }}/index.html', postLayout, { blog: 'blog', ...params });
         const newsPosts = await this.makePages('content/news/*.html', '_site/news/{{ slug }}/index.html', postLayout, { blog: 'news', ...params });
+
+        console.log("--------------blogPosts = " + blogPosts)
+        console.log("--------------newsPosts = " + newsPosts)
 
         await this.makeList(blogPosts, '_site/blog/index.html', listLayout, itemLayout, { blog: 'blog', title: 'Blog', ...params });
         await this.makeList(newsPosts, '_site/news/index.html', listLayout, itemLayout, { blog: 'news', title: 'News', ...params });
