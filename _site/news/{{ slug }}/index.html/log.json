@@ -1,6 +1,0 @@
-{
-  "timestamp": "2023-11-20T02:05:48+01:00",
-  "src": "content/news/*.html",
-  "dst": "_site/news/{{ slug }}/index.html",
-  "filesProcessed": 0
-}

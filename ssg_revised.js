@@ -99,6 +99,7 @@ class StaticSiteGenerator {
             date: match[1] || '1970-01-01',
             slug: match[2],
         };
+        this.slug = content['slug']
 
         // Read headers
         let end = 0;
@@ -258,10 +259,13 @@ class StaticSiteGenerator {
         await this.makePages('content/_index.html', path.join(siteDir, 'index.html'), pageLayout, params);
         // make_pages('content/_index.html', '_site/index.html', page_layout, **params)
 
-        await this.makePages('content/[!_]*.html', '_site/{{ slug }}/index.html', pageLayout, params);
+        /*
+        A slug is a string that can only include characters, numbers, dashes, and underscores. It is the part of a URL that identifies a particular page on a website, in a human-friendly form.
+        */
+        await this.makePages('content/[!_]*.html', `_site/${this.slug}/index.html`, pageLayout, params);
 
-        const blogPosts = await this.makePages('content/blog/*.md', '_site/blog/{{ slug }}/index.html', postLayout, { blog: 'blog', ...params });
-        const newsPosts = await this.makePages('content/news/*.html', '_site/news/{{ slug }}/index.html', postLayout, { blog: 'news', ...params });
+        const blogPosts = await this.makePages('content/blog/*.md', `_site/blog/${this.slug}/index.html`, postLayout, { blog: 'blog', ...params });
+        const newsPosts = await this.makePages('content/news/*.html', `_site/news/${this.slug}/index.html`, postLayout, { blog: 'news', ...params });
 
         console.log("--------------blogPosts = " + blogPosts)
         console.log("--------------newsPosts = " + newsPosts)

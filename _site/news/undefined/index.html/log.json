@@ -1,0 +1,6 @@
+{
+  "timestamp": "2023-11-20T03:00:24+01:00",
+  "src": "content/news/*.html",
+  "dst": "_site/news/undefined/index.html",
+  "filesProcessed": 0
+}
