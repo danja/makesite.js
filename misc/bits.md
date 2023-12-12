@@ -22,3 +22,8 @@ node --trace-warnings ms.js
                 feed_xml, item_xml, blog = 'blog', title = 'Blog', ** params)
         make_list(news_posts, '_site/news/rss.xml',
             feed_xml, item_xml, blog = 'news', title = 'News', ** params)
+
+src = 'content/[!_]\*.html'
+
+    for src_path in glob.glob(src):
+        content = read_content(src_path)

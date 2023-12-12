@@ -1,5 +1,5 @@
 {
-  "timestamp": "2023-11-20T03:00:24+01:00",
+  "timestamp": "2023-12-03T01:58:46+01:00",
   "src": "content/blog/*.md",
   "dst": "_site/blog/undefined/index.html",
   "filesProcessed": 0

@@ -1,5 +1,5 @@
 // Import the StaticSiteGenerator class
-const StaticSiteGenerator = require('./ssg_revised');
+const StaticSiteGenerator = require('./ssg');
 
 // Create an instance of StaticSiteGenerator
 const ssg = new StaticSiteGenerator();

@@ -151,15 +151,21 @@ class StaticSiteGenerator {
         //           const templateContent = await fsExtra.readFile(templatePath, 'utf8');
 
         // Process each markdown file in the source directory
+
+        // §§§§§ const mdFiles = glob.sync(path.join(src, '*.md'));
+
         const mdFiles = glob.sync(path.join(src, '*.md'));
+
         console.log("*** mdFiles = " + mdFiles);
 
-        for (const mdFile of mdFiles) {
+        //// for (const mdFile of mdFiles) {
+        mdFiles.forEach(mdFile => {
+            console.log("*** mdFile = " + mdFile);
             // Extract the file name without extension
             const baseName = path.basename(mdFile, path.extname(mdFile));
 
-            // Read markdown content
-            const mdContent = await fsExtra.readFile(mdFile, 'utf8');
+            // Read markdown content // await 
+            const mdContent = fsExtra.readFile(mdFile, 'utf8');
 
             // Convert markdown to HTML
             const htmlContent = marked(mdContent);
@@ -170,9 +176,9 @@ class StaticSiteGenerator {
             console.log("*** finalContent = " + finalContent);
             console.log("*** path.join(dst, `${baseName}.html`) = " + path.join(dst, `${baseName}.html`));
 
-            // Write the HTML file to the destination directory
-            await fsExtra.writeFile(path.join(dst, `${baseName}.html`), finalContent);
-        }
+            // Write the HTML file to the destination directory // await
+            fsExtra.writeFile(path.join(dst, `${baseName}.html`), finalContent);
+        })
 
         // Copy static files (images, CSS, JS) to the destination directory
         const staticSrc = path.join(src, 'static');
@@ -253,30 +259,60 @@ class StaticSiteGenerator {
         const finalPostLayout = this.render(pageLayout, postLayout);
         const finalListLayout = this.render(pageLayout, listLayout);
 
-        // async makePages(src, dst, templatePath)
-
-        // Create site pages
-        await this.makePages('content/_index.html', path.join(siteDir, 'index.html'), pageLayout, params);
-        // make_pages('content/_index.html', '_site/index.html', page_layout, **params)
-
         /*
         A slug is a string that can only include characters, numbers, dashes, and underscores. It is the part of a URL that identifies a particular page on a website, in a human-friendly form.
         */
+
+
+        // async makePages(src, dst, templatePath)
+
+        console.log("A")
+
+        // Create site pages
+        await this.makePages('content/_index.html', path.join(siteDir, 'index.html'), pageLayout, params);
+
+
+
+        console.log("B")
+
         await this.makePages('content/[!_]*.html', `_site/${this.slug}/index.html`, pageLayout, params);
 
+
+        console.log("AAAAAAAAAv")
+
+        console.log('content/[!_]*.html = ' + 'content/[!_]*.html')
+        console.log("sluggy = " + `_site/${this.slug}/index.html`)
+        console.log("pageLayout = " + pageLayout)
+
+        console.log("params = " + params)
+
+        console.log("C")
+
+        // Create blogs
         const blogPosts = await this.makePages('content/blog/*.md', `_site/blog/${this.slug}/index.html`, postLayout, { blog: 'blog', ...params });
+
+        console.log("D")
+
         const newsPosts = await this.makePages('content/news/*.html', `_site/news/${this.slug}/index.html`, postLayout, { blog: 'news', ...params });
 
+        console.log("E")
+        //////////////
         console.log("--------------blogPosts = " + blogPosts)
         console.log("--------------newsPosts = " + newsPosts)
 
+        // Create blog list pages
         await this.makeList(blogPosts, '_site/blog/index.html', listLayout, itemLayout, { blog: 'blog', title: 'Blog', ...params });
+        console.log("F")
+
         await this.makeList(newsPosts, '_site/news/index.html', listLayout, itemLayout, { blog: 'news', title: 'News', ...params });
+        console.log("G")
 
+        // Create RSS feeds
         await this.makeList(blogPosts, '_site/blog/rss.xml', feedXml, itemXml, { blog: 'blog', title: 'Blog', ...params });
+        console.log("H")
+
         await this.makeList(newsPosts, '_site/news/rss.xml', feedXml, itemXml, { blog: 'news', title: 'News', ...params });
-
-
+        console.log("I")
     }
 }
 
