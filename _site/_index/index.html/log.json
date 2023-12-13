@@ -1,0 +1,6 @@
+{
+  "timestamp": "2023-12-13T21:42:00+01:00",
+  "src": "content/[!_]*.html",
+  "dst": "_site/_index/index.html",
+  "filesProcessed": 2
+}

@@ -7,6 +7,15 @@ const marked = require('marked'); // Equivalent to commonmark in Python
 const fs = require('fs');
 const path = require('path');
 
+// Set options
+/*
+marked.use({
+    async: false,
+    pedantic: false,
+    gfm: true,
+});
+*/
+
 class StaticSiteGenerator {
     constructor() {
         console.log("*** Constructing ***");
@@ -79,9 +88,8 @@ class StaticSiteGenerator {
     // Read content and metadata from file into a dictionary
     async read_content(filename) {
         console.log("*** read_content ***");
-        const fs = require('fs');
-        const path = require('path');
-        const marked = require('marked');
+        console.log("*** filename = " + filename);
+
 
         // Read file content
         let text;
@@ -98,8 +106,12 @@ class StaticSiteGenerator {
         const content = {
             date: match[1] || '1970-01-01',
             slug: match[2],
-        };
+        }
+
+        console.log('stringy \n' + JSON.stringify(content))
+
         this.slug = content['slug']
+
 
         // Read headers
         let end = 0;
@@ -117,14 +129,20 @@ class StaticSiteGenerator {
         // Convert Markdown content to HTML, if applicable
         if (/\\.(md|mkd|mkdn|mdown|markdown)$/.test(filename)) {
             try {
-                text = marked(text);
+                text = marked.parse(text);
             } catch (err) {
                 this.log('WARNING: Cannot render Markdown in ' + filename + ': ' + err.message);
             }
         }
 
+        //    console.log('content.content =' + content.content)
+
         // Update the dictionary with content and RFC 2822 date
-        content.content = text;
+        content.content = text
+
+        console.log('content.content =' + content.content)
+
+
         content.rfc_2822_date = this.rfc_2822_format(content.date);
 
         return content;
@@ -140,35 +158,35 @@ class StaticSiteGenerator {
 
     async makePages(src, dst, templateContent) {
         console.log("*** makePages ***");
-        console.log("*** templateContent = " + templateContent);
+        //  console.log("*** templateContent = " + templateContent);
         console.log("*** src = " + src);
         console.log("*** dst = " + dst);
 
         // Create destination directory if it doesn't exist
         await fsExtra.ensureDir(dst);
 
-        // Read the template
-        //           const templateContent = await fsExtra.readFile(templatePath, 'utf8');
+        console.log("*** path.join(src, '*.md') = " + path.join(src, '*.md'));
 
-        // Process each markdown file in the source directory
 
-        // §§§§§ const mdFiles = glob.sync(path.join(src, '*.md'));
-
-        const mdFiles = glob.sync(path.join(src, '*.md'));
+        const mdFiles = glob.sync(src);
+        //    const mdFiles = glob.sync(path.join(src, '*.md'));
 
         console.log("*** mdFiles = " + mdFiles);
 
         //// for (const mdFile of mdFiles) {
-        mdFiles.forEach(mdFile => {
+        mdFiles.forEach(async mdFile => {
+
             console.log("*** mdFile = " + mdFile);
             // Extract the file name without extension
             const baseName = path.basename(mdFile, path.extname(mdFile));
 
             // Read markdown content // await 
-            const mdContent = fsExtra.readFile(mdFile, 'utf8');
+
+            const mdContent = await this.read_content(mdFile)
+            // const mdContent = fsExtra.readFile(mdFile, 'utf8');
 
             // Convert markdown to HTML
-            const htmlContent = marked(mdContent);
+            const htmlContent = marked.parse(mdContent.content);
 
             // Generate the final HTML content
             const finalContent = templateContent.replace('{{ content }}', htmlContent);
@@ -225,10 +243,10 @@ class StaticSiteGenerator {
         console.log("***  main ***");
         // Create a new '_site' directory from scratch
         const siteDir = '_site';
-        if (await fsExtra.pathExists(siteDir)) {  // Changed from fs to fsExtra
-            await fsExtra.remove(siteDir);        // Assuming you have fsExtra.remove method
+        if (await fsExtra.pathExists(siteDir)) {
+            await fsExtra.remove(siteDir);
         }
-        await fsExtra.copy('static', siteDir);    // Assuming you have fsExtra.copy method
+        await fsExtra.copy('static', siteDir);
 
 
         // Default parameters
@@ -275,6 +293,8 @@ class StaticSiteGenerator {
 
         console.log("B")
 
+        console.log("this.slug = " + this.slug)
+
         await this.makePages('content/[!_]*.html', `_site/${this.slug}/index.html`, pageLayout, params);
 
 
@@ -282,7 +302,7 @@ class StaticSiteGenerator {
 
         console.log('content/[!_]*.html = ' + 'content/[!_]*.html')
         console.log("sluggy = " + `_site/${this.slug}/index.html`)
-        console.log("pageLayout = " + pageLayout)
+        //  console.log("pageLayout = " + pageLayout)
 
         console.log("params = " + params)
 
