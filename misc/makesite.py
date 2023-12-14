@@ -95,7 +95,7 @@ def read_content(filename):
         'rfc_2822_date': rfc_2822_format(content['date'])
     })
 
-    return content
+    return content 
 
 
 def render(template, **params):

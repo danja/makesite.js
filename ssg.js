@@ -21,19 +21,6 @@ class StaticSiteGenerator {
         console.log("*** Constructing ***");
     }
 
-    // Reads the content of a file
-    async fread(filename) {
-        console.log("***************** Reading file:", filename);  // Debugging statement
-
-        try {
-            const data = fs.promises.readFile(filename, 'utf8');
-            return data;
-        } catch (err) {
-            console.error(err);
-            return null;
-        }
-    }
-
     // Writes content to a file
     fwrite(filename, text) {
         console.log("*** fwrite ***");
@@ -93,12 +80,16 @@ class StaticSiteGenerator {
 
         // Read file content
         let text;
+
         try {
-            text = await fs.promises.readFile(filename, 'utf8');
+            //   text = await fs.promises.readFile(filename, 'utf8');
+            text = fs.readFileSync(filename, 'utf8');
         } catch (err) {
             console.error('Error reading file:', err);
             return null;
         }
+
+        // console.log("*** text = " + text);
 
         // Extract date and slug from filename
         const dateSlug = path.basename(filename).split('.')[0];
@@ -111,6 +102,7 @@ class StaticSiteGenerator {
         console.log('stringy \n' + JSON.stringify(content))
 
         this.slug = content['slug']
+        console.log('content[slug] = ' + content['slug'])
 
 
         // Read headers
@@ -163,15 +155,15 @@ class StaticSiteGenerator {
         console.log("*** dst = " + dst);
 
         // Create destination directory if it doesn't exist
-        await fsExtra.ensureDir(dst);
+        // await fsExtra.ensureDir(dst);
 
-        console.log("*** path.join(src, '*.md') = " + path.join(src, '*.md'));
+        // console.log("*** path.join(src, '*.md') = " + path.join(src, '*.md'));
 
 
         const mdFiles = glob.sync(src);
         //    const mdFiles = glob.sync(path.join(src, '*.md'));
 
-        console.log("*** mdFiles = " + mdFiles);
+        console.log("*** mdFiles = " + JSON.stringify(mdFiles));
 
         //// for (const mdFile of mdFiles) {
         mdFiles.forEach(async mdFile => {
@@ -181,21 +173,26 @@ class StaticSiteGenerator {
             const baseName = path.basename(mdFile, path.extname(mdFile));
 
             // Read markdown content // await 
-
-            const mdContent = await this.read_content(mdFile)
+            console.log("******read_content*******");
+            const mdContent = this.read_content(mdFile) // was await
+            console.log("******content read*******");
             // const mdContent = fsExtra.readFile(mdFile, 'utf8');
 
             // Convert markdown to HTML
-            const htmlContent = marked.parse(mdContent.content);
+
+            const htmlContent = await marked.parse(mdContent)
 
             // Generate the final HTML content
             const finalContent = templateContent.replace('{{ content }}', htmlContent);
 
-            console.log("*** finalContent = " + finalContent);
+            console.log("**********************");
+            console.log("*** dst = " + dst);
+            console.log("*** `${baseName}.html` = " + `${baseName}.html`);
             console.log("*** path.join(dst, `${baseName}.html`) = " + path.join(dst, `${baseName}.html`));
 
             // Write the HTML file to the destination directory // await
-            fsExtra.writeFile(path.join(dst, `${baseName}.html`), finalContent);
+            // fsExtra.writeFile(path.join(dst, `${baseName}.html`), finalContent);
+            fsExtra.writeFile(dst, finalContent)
         })
 
         // Copy static files (images, CSS, JS) to the destination directory
@@ -206,6 +203,7 @@ class StaticSiteGenerator {
         }
 
         // Write a log entry
+        /*
         const logEntry = {
             timestamp: moment().format(),
             src,
@@ -213,6 +211,7 @@ class StaticSiteGenerator {
             filesProcessed: mdFiles.length
         };
         await fsExtra.writeFile(path.join(dst, 'log.json'), JSON.stringify(logEntry, null, 2));
+    */
     }
 
     async makeList(src, dst) {

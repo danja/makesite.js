@@ -1,6 +1,0 @@
-{
-  "timestamp": "2023-12-13T21:42:00+01:00",
-  "src": "content/blog/*.md",
-  "dst": "_site/blog/about/index.html",
-  "filesProcessed": 3
-}
