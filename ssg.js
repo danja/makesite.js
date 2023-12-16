@@ -1,16 +1,17 @@
 const os = require('os');
-const fsExtra = require('fs-extra'); // Equivalent to shutil in Python
+// const fsExtra = require('fs-extra'); // Equivalent to shutil in Python
 const glob = require('glob'); // Equivalent to glob in Python
 const process = require('process'); // Equivalent to sys in Python
 const moment = require('moment'); // Equivalent to datetime in Python
 const marked = require('marked'); // Equivalent to commonmark in Python
 const fs = require('fs');
 const path = require('path');
+// var pathExists = require('path-exists')
 
 // Set options
 /*
 marked.use({
-    async: false,
+    : false,
     pedantic: false,
     gfm: true,
 });
@@ -73,16 +74,14 @@ class StaticSiteGenerator {
     }
 
     // Read content and metadata from file into a dictionary
-    async read_content(filename) {
+    read_content(filename) {
         console.log("*** read_content ***");
         console.log("*** filename = " + filename);
 
-
-        // Read file content
         let text;
 
         try {
-            //   text = await fs.promises.readFile(filename, 'utf8');
+            //   text =  fs.promises.readFile(filename, 'utf8');
             text = fs.readFileSync(filename, 'utf8');
         } catch (err) {
             console.error('Error reading file:', err);
@@ -132,7 +131,7 @@ class StaticSiteGenerator {
         // Update the dictionary with content and RFC 2822 date
         content.content = text
 
-        console.log('content.content =' + content.content)
+        // console.log('content.content =' + content.content)
 
 
         content.rfc_2822_date = this.rfc_2822_format(content.date);
@@ -148,14 +147,19 @@ class StaticSiteGenerator {
         });
     }
 
-    async makePages(src, dst, templateContent) {
+    markdownToHTML(mdText) {
+        const htmlContent = marked.parse(mdText)
+        return htmlContent
+    }
+
+    makePages(src, dst, templateContent) {
         console.log("*** makePages ***");
         //  console.log("*** templateContent = " + templateContent);
         console.log("*** src = " + src);
         console.log("*** dst = " + dst);
 
         // Create destination directory if it doesn't exist
-        // await fsExtra.ensureDir(dst);
+        //  fsExtra.ensureDir(dst);
 
         // console.log("*** path.join(src, '*.md') = " + path.join(src, '*.md'));
 
@@ -166,22 +170,24 @@ class StaticSiteGenerator {
         console.log("*** mdFiles = " + JSON.stringify(mdFiles));
 
         //// for (const mdFile of mdFiles) {
-        mdFiles.forEach(async mdFile => {
+        mdFiles.forEach(mdFile => {
 
             console.log("*** mdFile = " + mdFile);
             // Extract the file name without extension
             const baseName = path.basename(mdFile, path.extname(mdFile));
-
-            // Read markdown content // await 
             console.log("******read_content*******");
-            const mdContent = this.read_content(mdFile) // was await
+            // Read markdown content //  
+            //   console.log(JSON.stringify(mdFile))
+
+            const mdContent = this.read_content(mdFile) // was 
             console.log("******content read*******");
             // const mdContent = fsExtra.readFile(mdFile, 'utf8');
 
             // Convert markdown to HTML
 
-            const htmlContent = await marked.parse(mdContent)
+            //       const htmlContent =  marked.parse(mdContent)
 
+            const htmlContent = this.markdownToHTML(mdContent.content)
             // Generate the final HTML content
             const finalContent = templateContent.replace('{{ content }}', htmlContent);
 
@@ -190,7 +196,7 @@ class StaticSiteGenerator {
             console.log("*** `${baseName}.html` = " + `${baseName}.html`);
             console.log("*** path.join(dst, `${baseName}.html`) = " + path.join(dst, `${baseName}.html`));
 
-            // Write the HTML file to the destination directory // await
+            // Write the HTML file to the destination directory // 
             // fsExtra.writeFile(path.join(dst, `${baseName}.html`), finalContent);
             fsExtra.writeFile(dst, finalContent)
         })
@@ -198,8 +204,8 @@ class StaticSiteGenerator {
         // Copy static files (images, CSS, JS) to the destination directory
         const staticSrc = path.join(src, 'static');
         const staticDst = path.join(dst, 'static');
-        if (await fsExtra.pathExists(staticSrc)) {
-            await fsExtra.copy(staticSrc, staticDst, { overwrite: true });
+        if (fsExtra.pathExists(staticSrc)) {
+            fsExtra.copy(staticSrc, staticDst, { overwrite: true });
         }
 
         // Write a log entry
@@ -210,42 +216,54 @@ class StaticSiteGenerator {
             dst,
             filesProcessed: mdFiles.length
         };
-        await fsExtra.writeFile(path.join(dst, 'log.json'), JSON.stringify(logEntry, null, 2));
+         fsExtra.writeFile(path.join(dst, 'log.json'), JSON.stringify(logEntry, null, 2));
     */
     }
 
-    async makeList(src, dst) {
+    makeList(src, dst) {
         console.log("*** makeList ***");
         if (!src || typeof src !== 'string') {
             throw new Error("Invalid 'src' argument: must be a defined string");
         }
         // Create destination directory if it doesn't exist
-        await fsExtra.ensureDir(dst);
+        fsExtra.ensureDir(dst);
 
         // List all files in the source directory
-        //  const files = (await fs.readdir(src))
+        //  const files = ( fs.readdir(src))
         //    .filter(f => fs.statSync(path.join(src, f)).isFile());
         console.log("***** src = " + src)
         console.log("***** dst = " + dst)
 
-        const files = (await fs.promises.readdir(src))
-            .filter(async f => {
-                const stats = await fs.promises.stat(path.join(src, f));
+        const files = (fs.promises.readdir(src))
+            .filter(f => {
+                const stats = fs.promises.stat(path.join(src, f));
                 return stats.isFile();
             });
 
         // Write the list to a JSON file in the destination directory
-        await fs.writeJson(path.join(dst, 'file_list.json'), files);
+        fs.writeJson(path.join(dst, 'file_list.json'), files);
     }
 
-    async main() {
+    main() {
         console.log("***  main ***");
         // Create a new '_site' directory from scratch
         const siteDir = '_site';
-        if (await fsExtra.pathExists(siteDir)) {
-            await fsExtra.remove(siteDir);
+
+
+
+        /*
+if (fsExtra.pathExists(siteDir)) {
+            fsExtra.remove(siteDir);
         }
-        await fsExtra.copy('static', siteDir);
+        */
+        if (fs.existsSync(siteDir)) {
+            fs.rmSync(siteDir, { recursive: true })
+        }
+
+        //  fs.copyFileSync(src, dest[, mode])
+        fs.cpSync('static', siteDir, { recursive: true })
+        //   fsExtra.copy('static', siteDir);
+
 
 
         // Default parameters
@@ -259,18 +277,24 @@ class StaticSiteGenerator {
 
         // If params.json exists, load it
         const paramsPath = 'params.json';
-        if (await fsExtra.pathExists(paramsPath)) {
-            const paramsJson = await fs.readJson(paramsPath);
+        if (fs.existsSync(paramsPath)) {
+
+
+            //     const paramsJson = fs.readJson(paramsPath);
+            //  const paramsJson = require(paramsPath);
+
+            const paramsJson = JSON.parse(fs.readFileSync(paramsPath, 'utf8'));
+
             params = { ...params, ...paramsJson };
         }
 
         // Load layouts
-        const pageLayout = await fs.promises.readFile('layout/page.html', 'utf8');
-        const postLayout = await fs.promises.readFile('layout/post.html', 'utf8');
-        const listLayout = await fs.promises.readFile('layout/list.html', 'utf8');
-        const itemLayout = await fs.promises.readFile('layout/item.html', 'utf8');
-        const feedXml = await fs.promises.readFile('layout/feed.xml', 'utf8');
-        const itemXml = await fs.promises.readFile('layout/item.xml', 'utf8');
+        const pageLayout = fs.promises.readFile('layout/page.html', 'utf8');
+        const postLayout = fs.promises.readFile('layout/post.html', 'utf8');
+        const listLayout = fs.promises.readFile('layout/list.html', 'utf8');
+        const itemLayout = fs.promises.readFile('layout/item.html', 'utf8');
+        const feedXml = fs.promises.readFile('layout/feed.xml', 'utf8');
+        const itemXml = fs.promises.readFile('layout/item.xml', 'utf8');
 
         // Combine layouts to form final layouts
         const finalPostLayout = this.render(pageLayout, postLayout);
@@ -281,12 +305,12 @@ class StaticSiteGenerator {
         */
 
 
-        // async makePages(src, dst, templatePath)
+        //  makePages(src, dst, templatePath)
 
         console.log("A")
 
         // Create site pages
-        await this.makePages('content/_index.html', path.join(siteDir, 'index.html'), pageLayout, params);
+        this.makePages('content/_index.html', path.join(siteDir, 'index.html'), pageLayout, params);
 
 
 
@@ -294,7 +318,7 @@ class StaticSiteGenerator {
 
         console.log("this.slug = " + this.slug)
 
-        await this.makePages('content/[!_]*.html', `_site/${this.slug}/index.html`, pageLayout, params);
+        this.makePages('content/[!_]*.html', `_site/${this.slug}/index.html`, pageLayout, params);
 
 
         console.log("AAAAAAAAAv")
@@ -308,11 +332,11 @@ class StaticSiteGenerator {
         console.log("C")
 
         // Create blogs
-        const blogPosts = await this.makePages('content/blog/*.md', `_site/blog/${this.slug}/index.html`, postLayout, { blog: 'blog', ...params });
+        const blogPosts = this.makePages('content/blog/*.md', `_site/blog/${this.slug}/index.html`, postLayout, { blog: 'blog', ...params });
 
         console.log("D")
 
-        const newsPosts = await this.makePages('content/news/*.html', `_site/news/${this.slug}/index.html`, postLayout, { blog: 'news', ...params });
+        const newsPosts = this.makePages('content/news/*.html', `_site/news/${this.slug}/index.html`, postLayout, { blog: 'news', ...params });
 
         console.log("E")
         //////////////
@@ -320,17 +344,17 @@ class StaticSiteGenerator {
         console.log("--------------newsPosts = " + newsPosts)
 
         // Create blog list pages
-        await this.makeList(blogPosts, '_site/blog/index.html', listLayout, itemLayout, { blog: 'blog', title: 'Blog', ...params });
+        this.makeList(blogPosts, '_site/blog/index.html', listLayout, itemLayout, { blog: 'blog', title: 'Blog', ...params });
         console.log("F")
 
-        await this.makeList(newsPosts, '_site/news/index.html', listLayout, itemLayout, { blog: 'news', title: 'News', ...params });
+        this.makeList(newsPosts, '_site/news/index.html', listLayout, itemLayout, { blog: 'news', title: 'News', ...params });
         console.log("G")
 
         // Create RSS feeds
-        await this.makeList(blogPosts, '_site/blog/rss.xml', feedXml, itemXml, { blog: 'blog', title: 'Blog', ...params });
+        this.makeList(blogPosts, '_site/blog/rss.xml', feedXml, itemXml, { blog: 'blog', title: 'Blog', ...params });
         console.log("H")
 
-        await this.makeList(newsPosts, '_site/news/rss.xml', feedXml, itemXml, { blog: 'news', title: 'News', ...params });
+        this.makeList(newsPosts, '_site/news/rss.xml', feedXml, itemXml, { blog: 'news', title: 'News', ...params });
         console.log("I")
     }
 }
