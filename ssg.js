@@ -194,19 +194,27 @@ class StaticSiteGenerator {
             console.log("**********************");
             console.log("*** dst = " + dst);
             console.log("*** `${baseName}.html` = " + `${baseName}.html`);
-            console.log("*** path.join(dst, `${baseName}.html`) = " + path.join(dst, `${baseName}.html`));
 
             // Write the HTML file to the destination directory // 
             // fsExtra.writeFile(path.join(dst, `${baseName}.html`), finalContent);
-            fsExtra.writeFile(dst, finalContent)
+            fs.writeFileSync(dst, finalContent)
         })
 
         // Copy static files (images, CSS, JS) to the destination directory
         const staticSrc = path.join(src, 'static');
         const staticDst = path.join(dst, 'static');
-        if (fsExtra.pathExists(staticSrc)) {
-            fsExtra.copy(staticSrc, staticDst, { overwrite: true });
+
+        if (fs.existsSync(staticSrc)) {
+            // fsExtra.copy(staticSrc, staticDst, { overwrite: true });
+            fs.cpSync(staticSrc, staticDst, { recursive: true, overwrite: true })
         }
+
+        /*
+          //  fs.copyFileSync(src, dest[, mode])
+        fs.cpSync('static', siteDir, { recursive: true })
+        */
+
+
 
         // Write a log entry
         /*
@@ -289,12 +297,21 @@ if (fsExtra.pathExists(siteDir)) {
         }
 
         // Load layouts
+        /*
         const pageLayout = fs.promises.readFile('layout/page.html', 'utf8');
         const postLayout = fs.promises.readFile('layout/post.html', 'utf8');
         const listLayout = fs.promises.readFile('layout/list.html', 'utf8');
         const itemLayout = fs.promises.readFile('layout/item.html', 'utf8');
         const feedXml = fs.promises.readFile('layout/feed.xml', 'utf8');
         const itemXml = fs.promises.readFile('layout/item.xml', 'utf8');
+*/
+        const pageLayout = fs.readFileSync('layout/page.html', 'utf8');
+        const postLayout = fs.readFileSync('layout/post.html', 'utf8');
+        const listLayout = fs.readFileSync('layout/list.html', 'utf8');
+        const itemLayout = fs.readFileSync('layout/item.html', 'utf8');
+        const feedXml = fs.readFileSync('layout/feed.xml', 'utf8');
+        const itemXml = fs.readFileSync('layout/item.xml', 'utf8');
+        console.log("pageLayout = " + pageLayout)
 
         // Combine layouts to form final layouts
         const finalPostLayout = this.render(pageLayout, postLayout);
