@@ -1,12 +1,10 @@
 const os = require('os');
-// const fsExtra = require('fs-extra'); // Equivalent to shutil in Python
 const glob = require('glob'); // Equivalent to glob in Python
 const process = require('process'); // Equivalent to sys in Python
 const moment = require('moment'); // Equivalent to datetime in Python
 const marked = require('marked'); // Equivalent to commonmark in Python
 const fs = require('fs');
 const path = require('path');
-// var pathExists = require('path-exists')
 
 // Set options
 /*
@@ -20,24 +18,6 @@ marked.use({
 class StaticSiteGenerator {
     constructor() {
         console.log("*** Constructing ***");
-    }
-
-    // Writes content to a file
-    fwrite(filename, text) {
-        console.log("*** fwrite ***");
-        const fs = require('fs');
-        const path = require('path');
-
-        try {
-            const basedir = path.dirname(filename);
-            if (!fs.existsSync(basedir)) {
-                fs.mkdirSync(basedir, { recursive: true });
-            }
-
-            fs.writeFileSync(filename, text, 'utf8');
-        } catch (err) {
-            console.error(err);
-        }
     }
 
     // Logs a message with specified arguments
