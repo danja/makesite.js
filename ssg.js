@@ -193,13 +193,14 @@ class StaticSiteGenerator {
 
             console.log("**********************");
             console.log("*** dst = " + dst);
-            console.log("*** `${baseName}.html` = " + `${baseName}.html`);
+
 
             // Write the HTML file to the destination directory // 
             // fsExtra.writeFile(path.join(dst, `${baseName}.html`), finalContent);
             fs.writeFileSync(dst, finalContent)
         })
 
+        /*
         // Copy static files (images, CSS, JS) to the destination directory
         const staticSrc = path.join(src, 'static');
         const staticDst = path.join(dst, 'static');
@@ -208,7 +209,7 @@ class StaticSiteGenerator {
             // fsExtra.copy(staticSrc, staticDst, { overwrite: true });
             fs.cpSync(staticSrc, staticDst, { recursive: true, overwrite: true })
         }
-
+*/
         /*
           //  fs.copyFileSync(src, dest[, mode])
         fs.cpSync('static', siteDir, { recursive: true })
