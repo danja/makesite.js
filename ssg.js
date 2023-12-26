@@ -5,6 +5,7 @@ const moment = require('moment'); // Equivalent to datetime in Python
 const marked = require('marked'); // Equivalent to commonmark in Python
 const fs = require('fs');
 const path = require('path');
+const util = require('util');
 
 // Set options
 /*
@@ -20,10 +21,44 @@ class StaticSiteGenerator {
         console.log("*** Constructing ***");
     }
 
+    // Read file 
+    readFile(filename) {
+        let text = fs.readFileSync(filename, 'utf8');
+
+        /*
+        let text;
+        try {
+    } catch (err) {
+        console.error('Error reading file:', err);
+        //   return null;
+    }
+    */
+        return text;
+    }
+
+    // Write to file 
+    writeFile(filename, text) {
+        fs.writeFileSync(filename, text)
+    }
+
+    rmDir(dir) {
+        if (fs.existsSync(dir)) {
+            fs.rmSync(dir, { recursive: true })
+        }
+    }
+
+    cpDir(src, dst) {
+        fs.cpSync(src, dst, { recursive: true })
+    }
+
+    ensureDir(dir) {
+        fsExtra.ensureDir(dst);
+    }
+
     // Logs a message with specified arguments
     log(msg, ...args) {
         console.log("*** log ***");
-        const util = require('util');
+
         console.error(util.format(msg, ...args));
     }
 
@@ -58,15 +93,17 @@ class StaticSiteGenerator {
         console.log("*** read_content ***");
         console.log("*** filename = " + filename);
 
-        let text;
+        let text = this.readFile(filename)
 
+        /*
         try {
-            //   text =  fs.promises.readFile(filename, 'utf8');
+
             text = fs.readFileSync(filename, 'utf8');
         } catch (err) {
             console.error('Error reading file:', err);
             return null;
         }
+        */
 
         // console.log("*** text = " + text);
 
@@ -177,7 +214,9 @@ class StaticSiteGenerator {
 
             // Write the HTML file to the destination directory // 
             // fsExtra.writeFile(path.join(dst, `${baseName}.html`), finalContent);
-            fs.writeFileSync(dst, finalContent)
+
+            // fs.writeFileSync(dst, finalContent)
+            this.writeFile(dst, finalContent)
         })
 
         /*
@@ -215,7 +254,9 @@ class StaticSiteGenerator {
             throw new Error("Invalid 'src' argument: must be a defined string");
         }
         // Create destination directory if it doesn't exist
-        fsExtra.ensureDir(dst);
+        this.ensureDir(dst)
+
+        // fsExtra.ensureDir(dst);
 
         // List all files in the source directory
         //  const files = ( fs.readdir(src))
@@ -223,8 +264,12 @@ class StaticSiteGenerator {
         console.log("***** src = " + src)
         console.log("***** dst = " + dst)
 
-        const files = (fs.promises.readdir(src))
+        HERERERERERERE
+
+        //   const files = (fs.promises.readdir(src))
+        const files = (fs.readdirSync(src))
             .filter(f => {
+                probably wrong https://nodejs.org/api/fs.html#class-fsstats
                 const stats = fs.promises.stat(path.join(src, f));
                 return stats.isFile();
             });
@@ -239,21 +284,15 @@ class StaticSiteGenerator {
         const siteDir = '_site';
 
 
-
         /*
-if (fsExtra.pathExists(siteDir)) {
-            fsExtra.remove(siteDir);
-        }
-        */
         if (fs.existsSync(siteDir)) {
             fs.rmSync(siteDir, { recursive: true })
         }
-
-        //  fs.copyFileSync(src, dest[, mode])
         fs.cpSync('static', siteDir, { recursive: true })
-        //   fsExtra.copy('static', siteDir);
+*/
 
-
+        this.rmDir(siteDir)
+        this.cpDir('static', siteDir)
 
         // Default parameters
         let params = {
