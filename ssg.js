@@ -19,40 +19,107 @@ marked.use({
 class StaticSiteGenerator {
     constructor() {
         console.log("*** Constructing ***");
-    }
 
-    // Read file 
-    readFile(filename) {
-        let text = fs.readFileSync(filename, 'utf8');
+        // Default parameters
+        this.params = {
+            basePath: '',
+            subtitle: 'A Site',
+            author: 'The Author',
+            siteUrl: 'https://example.org',
+            currentYear: moment().year()
+        }
 
-        /*
-        let text;
-        try {
-    } catch (err) {
-        console.error('Error reading file:', err);
-        //   return null;
-    }
-    */
-        return text;
-    }
+        // If params.json exists, load it
+        const paramsPath = 'params.json'
+        if (this.fsExists(paramsPath)) {
 
-    // Write to file 
-    writeFile(filename, text) {
-        fs.writeFileSync(filename, text)
-    }
-
-    rmDir(dir) {
-        if (fs.existsSync(dir)) {
-            fs.rmSync(dir, { recursive: true })
+            // const paramsJson = JSON.parse(fs.readFileSync(paramsPath, 'utf8'));
+            const paramsJson = JSON.parse(readFile(paramsPath));
+            params = { ...params, ...paramsJson };
         }
     }
 
-    cpDir(src, dst) {
-        fs.cpSync(src, dst, { recursive: true })
+    main() {
+        console.log("***  main ***");
+
+        this.initSite('_site', 'static')
+
+        // Load layouts
+        const pageLayout = this.readFile('layout/page.html');
+        const postLayout = this.readFile('layout/post.html');
+        const listLayout = this.readFile('layout/list.html');
+        const itemLayout = this.readFile('layout/item.html');
+        const feedXml = this.readFile('layout/feed.xml');
+        const itemXml = this.readFile('layout/item.xml');
+
+        //        console.log("pageLayout = " + pageLayout)
+
+        // Combine layouts to form final layouts
+        const finalPostLayout = this.render(pageLayout, postLayout);
+        const finalListLayout = this.render(pageLayout, listLayout);
+
+        /*
+        A slug is a string that can only include characters, numbers, dashes, and underscores. It is the part of a URL that identifies a particular page on a website, in a human-friendly form.
+        */
+
+
+        //  makePages(src, dst, templatePath)
+
+        console.log("A")
+
+        // Create site pages
+        this.makePages('content/_index.html', path.join(siteDir, 'index.html'), pageLayout, params);
+
+
+
+        console.log("B")
+
+        console.log("this.slug = " + this.slug)
+
+        this.makePages('content/[!_]*.html', `_site/${this.slug}/index.html`, pageLayout, params);
+
+
+        console.log("AAAAAAAAAv")
+
+        console.log('content/[!_]*.html = ' + 'content/[!_]*.html')
+        console.log("sluggy = " + `_site/${this.slug}/index.html`)
+        //  console.log("pageLayout = " + pageLayout)
+
+        console.log("params = " + params)
+
+        console.log("C")
+
+        // Create blogs
+        const blogPosts = this.makePages('content/blog/*.md', `_site/blog/${this.slug}/index.html`, postLayout, { blog: 'blog', ...params });
+
+        console.log("D")
+
+        const newsPosts = this.makePages('content/news/*.html', `_site/news/${this.slug}/index.html`, postLayout, { blog: 'news', ...params });
+
+        console.log("E")
+        //////////////
+        console.log("--------------blogPosts = " + blogPosts)
+        console.log("--------------newsPosts = " + newsPosts)
+
+        // Create blog list pages
+        this.makeList(blogPosts, '_site/blog/index.html', listLayout, itemLayout, { blog: 'blog', title: 'Blog', ...params });
+        console.log("F")
+
+        this.makeList(newsPosts, '_site/news/index.html', listLayout, itemLayout, { blog: 'news', title: 'News', ...params });
+        console.log("G")
+
+        // Create RSS feeds
+        this.makeList(blogPosts, '_site/blog/rss.xml', feedXml, itemXml, { blog: 'blog', title: 'Blog', ...params });
+        console.log("H")
+
+        this.makeList(newsPosts, '_site/news/rss.xml', feedXml, itemXml, { blog: 'news', title: 'News', ...params });
+        console.log("I")
     }
 
-    ensureDir(dir) {
-        fsExtra.ensureDir(dst);
+    // Create a new site directory from scratch
+    initSite(siteRootDir, staticDir) {
+        this.rmDir(siteRootDir)
+        this.cpDir(staticDir, siteRootDir)
     }
 
     // Logs a message with specified arguments
@@ -89,8 +156,8 @@ class StaticSiteGenerator {
     }
 
     // Read content and metadata from file into a dictionary
-    read_content(filename) {
-        console.log("*** read_content ***");
+    readContent(filename) {
+        console.log("*** readContent ***");
         console.log("*** filename = " + filename);
 
         let text = this.readFile(filename)
@@ -169,72 +236,47 @@ class StaticSiteGenerator {
         return htmlContent
     }
 
-    makePages(src, dst, templateContent) {
-        console.log("*** makePages ***");
+    // this.makePages('content/_index.html', path.join(siteDir, 'index.html'), pageLayout, params);
+
+    makePages(sourceDir, targetDir, templateContent, pageParams) {
+        console.log("\n\n*** makePages ***");
         //  console.log("*** templateContent = " + templateContent);
-        console.log("*** src = " + src);
-        console.log("*** dst = " + dst);
+        console.log("*** sourceDir = " + sourceDir);
+        console.log("*** targetDir = " + targetDir);
 
+        console.log("*** pageParams = " + JSON.stringify(pageParams));
         // Create destination directory if it doesn't exist
-        //  fsExtra.ensureDir(dst);
+        const sourceFiles = glob.sync(sourceDir);
+        let items = []
+        console.log("*** sourceFiles = " + JSON.stringify(sourceFiles));
 
-        // console.log("*** path.join(src, '*.md') = " + path.join(src, '*.md'));
+        sourceFiles.forEach(sourceFile => {
 
+            console.log("*** sourceFile = " + sourceFile);
 
-        const mdFiles = glob.sync(src);
-        //    const mdFiles = glob.sync(path.join(src, '*.md'));
-
-        console.log("*** mdFiles = " + JSON.stringify(mdFiles));
-
-        //// for (const mdFile of mdFiles) {
-        mdFiles.forEach(mdFile => {
-
-            console.log("*** mdFile = " + mdFile);
             // Extract the file name without extension
-            const baseName = path.basename(mdFile, path.extname(mdFile));
-            console.log("******read_content*******");
-            // Read markdown content //  
-            //   console.log(JSON.stringify(mdFile))
+            //    const baseName = path.basename(sourceFile, path.extname(sourceFile));
+            console.log("******readContent*******");
 
-            const mdContent = this.read_content(mdFile) // was 
+            // Read markdown content //  
+            const mdContent = this.readContent(sourceFile)
             console.log("******content read*******");
-            // const mdContent = fsExtra.readFile(mdFile, 'utf8');
 
             // Convert markdown to HTML
-
-            //       const htmlContent =  marked.parse(mdContent)
-
             const htmlContent = this.markdownToHTML(mdContent.content)
             // Generate the final HTML content
             const finalContent = templateContent.replace('{{ content }}', htmlContent);
 
             console.log("**********************");
-            console.log("*** dst = " + dst);
+            console.log("*** targetDir = " + targetDir);
 
 
             // Write the HTML file to the destination directory // 
-            // fsExtra.writeFile(path.join(dst, `${baseName}.html`), finalContent);
+            // fsExtra.writeFile(path.join(targetDir, `${baseName}.html`), finalContent);
 
-            // fs.writeFileSync(dst, finalContent)
-            this.writeFile(dst, finalContent)
+            // fs.writeFileSync(targetDir, finalContent)
+            this.writeFile(targetDir, finalContent)
         })
-
-        /*
-        // Copy static files (images, CSS, JS) to the destination directory
-        const staticSrc = path.join(src, 'static');
-        const staticDst = path.join(dst, 'static');
-
-        if (fs.existsSync(staticSrc)) {
-            // fsExtra.copy(staticSrc, staticDst, { overwrite: true });
-            fs.cpSync(staticSrc, staticDst, { recursive: true, overwrite: true })
-        }
-*/
-        /*
-          //  fs.copyFileSync(src, dest[, mode])
-        fs.cpSync('static', siteDir, { recursive: true })
-        */
-
-
 
         // Write a log entry
         /*
@@ -242,158 +284,62 @@ class StaticSiteGenerator {
             timestamp: moment().format(),
             src,
             dst,
-            filesProcessed: mdFiles.length
+            filesProcessed: sourceFiles.length
         };
          fsExtra.writeFile(path.join(dst, 'log.json'), JSON.stringify(logEntry, null, 2));
     */
     }
 
-    makeList(src, dst) {
-        console.log("*** makeList ***");
-        if (!src || typeof src !== 'string') {
-            throw new Error("Invalid 'src' argument: must be a defined string");
-        }
-        // Create destination directory if it doesn't exist
-        this.ensureDir(dst)
+    makeList(posts, targetDir, listLayout, itemLayout, params = {}) {
+        // Generate list page for a blog.
+        let items = [];
+        posts.forEach(post => {
+            let itemParams = { ...params, ...post };
+            itemParams.summary = truncate(post.content);
+            let item = render(itemLayout, itemParams);
+            items.push(item);
+        });
 
-        // fsExtra.ensureDir(dst);
+        params.content = items.join('');
+        let dstPath = render(targetDir, params);
+        let output = render(listLayout, params);
 
-        // List all files in the source directory
-        //  const files = ( fs.readdir(src))
-        //    .filter(f => fs.statSync(path.join(src, f)).isFile());
-        console.log("***** src = " + src)
-        console.log("***** dst = " + dst)
-
-        HERERERERERERE
-
-        //   const files = (fs.promises.readdir(src))
-        const files = (fs.readdirSync(src))
-            .filter(f => {
-                probably wrong https://nodejs.org/api/fs.html#class-fsstats
-                const stats = fs.promises.stat(path.join(src, f));
-                return stats.isFile();
-            });
-
-        // Write the list to a JSON file in the destination directory
-        fs.writeJson(path.join(dst, 'file_list.json'), files);
+        console.log(`Rendering list => ${dstPath} ...`);
+        // fs.writeFileSync(dstPath, output);
+        this.writeFile(dstPath, output)
     }
 
-    main() {
-        console.log("***  main ***");
-        // Create a new '_site' directory from scratch
-        const siteDir = '_site';
-
-
-        /*
-        if (fs.existsSync(siteDir)) {
-            fs.rmSync(siteDir, { recursive: true })
-        }
-        fs.cpSync('static', siteDir, { recursive: true })
-*/
-
-        this.rmDir(siteDir)
-        this.cpDir('static', siteDir)
-
-        // Default parameters
-        let params = {
-            basePath: '',
-            subtitle: 'A Site',
-            author: 'The Author',
-            siteUrl: 'https://example.org',
-            currentYear: moment().year()
-        };
-
-        // If params.json exists, load it
-        const paramsPath = 'params.json';
-        if (fs.existsSync(paramsPath)) {
-
-
-            //     const paramsJson = fs.readJson(paramsPath);
-            //  const paramsJson = require(paramsPath);
-
-            const paramsJson = JSON.parse(fs.readFileSync(paramsPath, 'utf8'));
-
-            params = { ...params, ...paramsJson };
-        }
-
-        // Load layouts
-        /*
-        const pageLayout = fs.promises.readFile('layout/page.html', 'utf8');
-        const postLayout = fs.promises.readFile('layout/post.html', 'utf8');
-        const listLayout = fs.promises.readFile('layout/list.html', 'utf8');
-        const itemLayout = fs.promises.readFile('layout/item.html', 'utf8');
-        const feedXml = fs.promises.readFile('layout/feed.xml', 'utf8');
-        const itemXml = fs.promises.readFile('layout/item.xml', 'utf8');
-*/
-        const pageLayout = fs.readFileSync('layout/page.html', 'utf8');
-        const postLayout = fs.readFileSync('layout/post.html', 'utf8');
-        const listLayout = fs.readFileSync('layout/list.html', 'utf8');
-        const itemLayout = fs.readFileSync('layout/item.html', 'utf8');
-        const feedXml = fs.readFileSync('layout/feed.xml', 'utf8');
-        const itemXml = fs.readFileSync('layout/item.xml', 'utf8');
-        console.log("pageLayout = " + pageLayout)
-
-        // Combine layouts to form final layouts
-        const finalPostLayout = this.render(pageLayout, postLayout);
-        const finalListLayout = this.render(pageLayout, listLayout);
-
-        /*
-        A slug is a string that can only include characters, numbers, dashes, and underscores. It is the part of a URL that identifies a particular page on a website, in a human-friendly form.
-        */
-
-
-        //  makePages(src, dst, templatePath)
-
-        console.log("A")
-
-        // Create site pages
-        this.makePages('content/_index.html', path.join(siteDir, 'index.html'), pageLayout, params);
-
-
-
-        console.log("B")
-
-        console.log("this.slug = " + this.slug)
-
-        this.makePages('content/[!_]*.html', `_site/${this.slug}/index.html`, pageLayout, params);
-
-
-        console.log("AAAAAAAAAv")
-
-        console.log('content/[!_]*.html = ' + 'content/[!_]*.html')
-        console.log("sluggy = " + `_site/${this.slug}/index.html`)
-        //  console.log("pageLayout = " + pageLayout)
-
-        console.log("params = " + params)
-
-        console.log("C")
-
-        // Create blogs
-        const blogPosts = this.makePages('content/blog/*.md', `_site/blog/${this.slug}/index.html`, postLayout, { blog: 'blog', ...params });
-
-        console.log("D")
-
-        const newsPosts = this.makePages('content/news/*.html', `_site/news/${this.slug}/index.html`, postLayout, { blog: 'news', ...params });
-
-        console.log("E")
-        //////////////
-        console.log("--------------blogPosts = " + blogPosts)
-        console.log("--------------newsPosts = " + newsPosts)
-
-        // Create blog list pages
-        this.makeList(blogPosts, '_site/blog/index.html', listLayout, itemLayout, { blog: 'blog', title: 'Blog', ...params });
-        console.log("F")
-
-        this.makeList(newsPosts, '_site/news/index.html', listLayout, itemLayout, { blog: 'news', title: 'News', ...params });
-        console.log("G")
-
-        // Create RSS feeds
-        this.makeList(blogPosts, '_site/blog/rss.xml', feedXml, itemXml, { blog: 'blog', title: 'Blog', ...params });
-        console.log("H")
-
-        this.makeList(newsPosts, '_site/news/rss.xml', feedXml, itemXml, { blog: 'news', title: 'News', ...params });
-        console.log("I")
+    ////////////// WRAPPERS AROUND FS
+    // Read file 
+    readFile(filename) {
+        let text = fs.readFileSync(filename, 'utf8');
+        return text;
     }
+
+    // Write to file 
+    writeFile(filename, text) {
+        fs.writeFileSync(filename, text)
+    }
+
+    rmDir(dir) {
+        if (fs.existsSync(dir)) {
+            fs.rmSync(dir, { recursive: true })
+        }
+    }
+
+    cpDir(sourceDir, targetDir) {
+        fs.cpSync(sourceDir, targetDir, { recursive: true })
+    }
+
+    fsExists(path) {
+        return fs.existsSync(path)
+    }
+
+
+    ensureDir(dir) {
+        fsExtra.ensureDir(dir);
+    }
+    ////////////// END WRAPPERS AROUND FS
 }
 
 module.exports = StaticSiteGenerator;
